@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Eye Disease Prediction</title>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link href="https://fonts.googleapis.com/css?family=Poppins:300,400,600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet"
+href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+
+<style>
+
+body{
+background:#eaf6ff;
+font-family:'Poppins', sans-serif;
+color:black;
+text-align:center;
+padding:40px;
+}
+
+.title h1{
+font-weight:700;
+margin-bottom:40px;
+color:#1a4d7a;
+}
+
+.upload-box{
+background:white;
+padding:40px;
+border-radius:15px;
+width:420px;
+margin:auto;
+box-shadow:0 10px 25px rgba(0,0,0,0.2);
+}
+
+.file-upload-btn{
+background:#1a73e8;
+border:none;
+color:white;
+padding:12px 25px;
+border-radius:8px;
+font-size:16px;
+cursor:pointer;
+}
+
+.file-upload-btn:hover{
+background:#0b5ed7;
+}
+
+.file-upload-input{
+display:none;
+}
+
+.file-upload-content{
+display:none;
+}
+
+.file-upload-image{
+max-width:100%;
+border-radius:10px;
+margin-top:20px;
+}
+
+.result-message{
+margin-top:20px;
+font-size:22px;
+font-weight:bold;
+color:#1a4d7a;
+}
+
+.disease-info{
+margin-top:20px;
+text-align:left;
+}
+
+.info-section{
+margin-top:60px;
+max-width:900px;
+margin-left:auto;
+margin-right:auto;
+}
+
+footer{
+margin-top:50px;
+font-weight:bold;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="title">
+<h1>EXPERT SYSTEM FOR EYE DISEASE PREDICTION</h1>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+
+<div class="upload-box">
+
+<button class="file-upload-btn"
+onclick="document.getElementById('fileInput').click();">
+Upload Eye Image
+</button>
+
+<input id="fileInput"
+class="file-upload-input"
+type="file"
+onchange="readURL(this);"
+name="imagefile">
+
+<div class="file-upload-content">
+
+<img class="file-upload-image"
+id="face-image"
+src="#"
+alt="your image"/>
+
+<div id="loading">
+
+<div class="spinner-border text-primary"></div>
+<p>Analyzing Image...</p>
+
+</div>
+
+<p class="result-message"></p>
+
+<div class="disease-info">
+<h5>Disease Information</h5>
+<p id="disease-description"></p>
+</div>
+
+<button class="btn btn-danger mt-3"
+onclick="removeUpload()">Upload Another Image</button>
+
+</div>
+
+</div>
+
+<div class="info-section">
+
+<h3>Common Eye Diseases</h3>
+
+<div class="row">
+
+<div class="col-md-4">
+<h5>Cataract</h5>
+<p>Clouding of the eye lens that causes blurred vision.</p>
+</div>
+
+<div class="col-md-4">
+<h5>Glaucoma</h5>
+<p>Damage to optic nerve due to high eye pressure.</p>
+</div>
+
+<div class="col-md-4">
+<h5>Diabetic Retinopathy</h5>
+<p>Damage to retina caused by diabetes.</p>
+</div>
+
+</div>
+
+</div>
+
+<footer>
+AI Based Eye Disease Prediction System 
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
+
+<script>
+
+const URL = "./";
+let model;
+
+async function init(){
+
+try {
+
+const modelURL = URL + "model.json";
+const metadataURL = URL + "metadata.json";
+
+model = await tmImage.load(modelURL, metadataURL);
+
+console.log("Model loaded successfully");
+
+} catch (error) {
+
+console.error("Error loading model:", error);
+
+}
+
+}
+
+async function predict(){
+
+try {
+
+var image = document.getElementById("face-image");
+
+const prediction = await model.predict(image,false);
+
+prediction.sort((a,b)=>parseFloat(b.probability)-parseFloat(a.probability));
+
+let resultTitle = prediction[0].className;
+
+console.log("Prediction:", prediction);
+
+$('.result-message').html(resultTitle + " Detected");
+
+let description="";
+
+if(resultTitle=="Cataract"){
+description="Cataract causes cloudy vision and commonly occurs in older adults.";
+}
+
+else if(resultTitle=="Glaucoma"){
+description="Glaucoma damages the optic nerve and may lead to blindness.";
+}
+
+else if(resultTitle=="Normal"){
+description="No disease detected. The eye appears healthy.";
+}
+
+else if(resultTitle=="Bulging"){
+description="Bulging eyes may indicate thyroid issues or other conditions.";
+}
+
+else if(resultTitle=="Crossed"){
+description="Crossed eyes (strabismus) affect vision alignment.";
+}
+
+else if(resultTitle=="Mucormycosis"){
+description="Mucormycosis is a fungal infection affecting the sinuses.";
+}
+
+else if(resultTitle=="Uveitis"){
+description="Uveitis is inflammation of the eye's middle layer.";
+}
+
+else {
+description="Unknown condition detected.";
+}
+
+$('#disease-description').html(description);
+
+} catch (error) {
+
+console.error("Error predicting:", error);
+
+}
+
+}
+
+function readURL(input){
+
+if(input.files && input.files[0]){
+
+let reader = new FileReader();
+
+reader.onload = function(e){
+
+$('.file-upload-image').attr('src',e.target.result);
+
+$('.file-upload-content').show();
+
+};
+
+reader.readAsDataURL(input.files[0]);
+
+init().then(function(){
+
+return predict();
+
+}).then(function(){
+
+$('#loading').hide();
+
+});
+
+}
+
+}
+
+function removeUpload(){
+
+$('.file-upload-input').val("");
+
+$('.file-upload-content').hide();
+
+}
+
+</script>
+
+</body>
+</html>
